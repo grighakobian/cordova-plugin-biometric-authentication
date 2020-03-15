@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-biometric-authentication" version="0.0.1">
+   <name>Biometric Authentication</name>
+   <js-module name="BiometricAuthentication" src="www/BiometricAuthentication.js">
+      <clobbers target="biometricauthentication" />
+   </js-module>
+
+   <!-- iOS platform  conifigurations -->
+   <platform name="ios">
+      <!-- iOS platform  conifiguration files -->
+      <config-file parent="/*" target="config.xml">
+         <feature name="BiometricAuthentication">
+            <param name="ios-package" value="BiometricAuthentication" />
+         </feature>
+      </config-file>
+
+      <config-file target="*-Info.plist" parent="NSCameraUsageDescription">
+         <string>App uses camera.</string>
+       </config-file>
+
+      <!-- iOS platform  source and resource files -->
+      <source-file src="src/ios/src/BiometricAuthentication.swift" target-dir = "src"/>
+      <!-- OZLivenessSDK source files -->
+      <source-file src="src/ios/sdk/OZFileVideoManager.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZFrameView.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZFrameViewController.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZLivenessViewController.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZRequestManager.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZResources.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZSDK-API.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZSDK.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZUI.swift" target-dir = "sdk"/>
+      <!-- iOS platform OZLivenessSDK resource files -->
+      <source-file src="src/ios/res/GoogleService-Info.plist" target-dir = "res" />
+      <source-file src="src/ios/localization/Base.lproj" target-dir = "res" />
+      <source-file src="src/ios/localization/en.lproj" target-dir = "res" />
+      <source-file src="src/ios/localization/ru.lproj" target-dir = "res" />
+      <source-file src="src/ios/res/closebutton.png" target-dir = "res" />
+
+      <!-- iOS platform frameworks with pods  -->
+      <podspec>
+         <config>
+           <source url="https://github.com/CocoaPods/Specs.git"/>
+         </config>
+         <pods use-frameworks="true" inhibit-all-warnings="true">
+           <pod name="Alamofire" spec="4.9.0" />
+           <pod name="DeviceKit" spec="2.1.0" />
+           <pod name="Firebase" spec="5.2.0" />
+           <pod name="Firebase/Core" spec="5.2.0" />
+           <pod name="Firebase/MLVision" spec="5.2.0" />
+           <pod name="Firebase/MLVisionFaceModel" spec="5.2.0" />
+         </pods>
+       </podspec>
+   </platform>
+
+   <!-- Android platform  conifigurations -->
+   <platform name="android">
+      <config-file parent="/*" target="res/xml/config.xml">
+         <feature name="BiometricAuthentication">
+            <param name="android-package" value="cordova-plugin-biometric-authentication.BiometricAuthentication" />
+         </feature>
+      </config-file>
+      <config-file parent="/*" target="AndroidManifest.xml" />
+      <source-file src="src/android/BiometricAuthentication.java" target-dir="src/cordova-plugin-biometric-authentication/BiometricAuthentication" />
+   </platform>
+
+</plugin>
