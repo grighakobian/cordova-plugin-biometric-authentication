@@ -46,7 +46,7 @@
       <framework src="Firebase/MLVision" type="podspec" spec="5.2.0"/>
       <framework src="Firebase/MLVisionFaceModel" type="podspec" spec="5.2.0"/>
 
-      <!-- <podspec>
+       <!-- <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
          </config>
@@ -58,8 +58,8 @@
            <pod name="Firebase/MLVision" spec="5.2.0" />
            <pod name="Firebase/MLVisionFaceModel" spec="5.2.0" />
          </pods>
-       </podspec>
-   </platform> -->
+       </podspec> -->
+   </platform>
 
    <!-- Android platform  conifigurations -->
    <platform name="android">
