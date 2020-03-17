@@ -38,14 +38,14 @@
       <source-file src="src/ios/res/closebutton.png" target-dir = "res" />
 
       <!-- iOS platform frameworks with pods  -->
-
-      <framework src="Alamofire" type="podspec" spec="4.9.0"/>
+      <!-- <framework src="Alamofire" type="podspec" spec="4.9.0"/>
       <framework src="DeviceKit" type="podspec" spec="2.1.0"/>
       <framework src="Firebase" type="podspec" spec="5.2.0"/>
       <framework src="Firebase/Core" type="podspec" spec="5.2.0"/>
       <framework src="Firebase/MLVision" type="podspec" spec="5.2.0"/>
-      <framework src="Firebase/MLVisionFaceModel" type="podspec" spec="5.2.0"/>
+      <framework src="Firebase/MLVisionFaceModel" type="podspec" spec="5.2.0"/> -->
 
+      
        <!-- <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
@@ -59,6 +59,11 @@
            <pod name="Firebase/MLVisionFaceModel" spec="5.2.0" />
          </pods>
        </podspec> -->
+   </platform>
+
+   <platform name="ios">
+      <dependency id="cordova-plugin-cocoapod-support"/>
+      <pod name="Alamofire" version="4.9.0" />
    </platform>
 
    <!-- Android platform  conifigurations -->
