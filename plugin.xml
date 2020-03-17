@@ -4,12 +4,6 @@
    <js-module name="BiometricAuthentication" src="www/BiometricAuthentication.js">
       <clobbers target="biometricauthentication" />
    </js-module>
-   
-   <!-- <engines>
-      <engine name="cordova" version=">=7.1.0"/>
-      <engine name="cordova-android" version=">=7.1.0"/>
-      <engine name="cordova-ios" version=">=4.5.0"/>
-    </engines> -->
 
    <!-- iOS platform  conifigurations -->
    <platform name="ios">
