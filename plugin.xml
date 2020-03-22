@@ -32,25 +32,14 @@
       <source-file src="src/ios/sdk/OZUI.swift" target-dir = "sdk"/>
       <!-- iOS platform OZLivenessSDK resource files -->
       <source-file src="src/ios/res/GoogleService-Info.plist" target-dir = "res" />
-      <source-file src="src/ios/localization/Base.lproj" target-dir = "res" />
-      <source-file src="src/ios/localization/en.lproj" target-dir = "res" />
-      <source-file src="src/ios/localization/ru.lproj" target-dir = "res" />
+      <source-file src="src/ios/res/localization.json" target-dir = "res" />
       <source-file src="src/ios/res/closebutton.png" target-dir = "res" />
-
-      <!-- iOS platform frameworks with pods  -->
-      <!-- <framework src="Alamofire" type="podspec" spec="4.9.0"/>
-      <framework src="DeviceKit" type="podspec" spec="2.1.0"/>
-      <framework src="Firebase" type="podspec" spec="5.2.0"/>
-      <framework src="Firebase/Core" type="podspec" spec="5.2.0"/>
-      <framework src="Firebase/MLVision" type="podspec" spec="5.2.0"/>
-      <framework src="Firebase/MLVisionFaceModel" type="podspec" spec="5.2.0"/> -->
-
-      
-       <!-- <podspec>
+      <!-- iOS platform frameworks -->
+      <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
          </config>
-         <pods use-frameworks="true" inhibit-all-warnings="true">
+         <pods use-frameworks="true">
            <pod name="Alamofire" spec="4.9.0" />
            <pod name="DeviceKit" spec="2.1.0" />
            <pod name="Firebase" spec="5.2.0" />
@@ -58,12 +47,7 @@
            <pod name="Firebase/MLVision" spec="5.2.0" />
            <pod name="Firebase/MLVisionFaceModel" spec="5.2.0" />
          </pods>
-       </podspec> -->
-   </platform>
-
-   <platform name="ios">
-      <dependency id="cordova-plugin-cocoapod-support"/>
-      <pod name="Alamofire" version="4.9.0" />
+       </podspec>
    </platform>
 
    <!-- Android platform  conifigurations -->

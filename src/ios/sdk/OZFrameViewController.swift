@@ -9,7 +9,6 @@ import Foundation
 import AVFoundation
 import UIKit
 import FirebaseMLVision
-import DeviceKit
 
 class OZFrameViewController: UIViewController {
     
@@ -128,8 +127,9 @@ class OZFrameViewController: UIViewController {
     }
     
     func pFrameView() {
-        guard let videoPreviewLayer = videoPreviewLayer else { return }
-        self.view.layoutSubviews()
+        if videoPreviewLayer != nil {
+            self.view.layoutSubviews()            
+        }
     }
     
     func pInfoLabel() {
@@ -150,35 +150,27 @@ class OZFrameViewController: UIViewController {
     
     func pCloseButton() {
         let buttonColor = OZSDK.customization.buttonColor
-        let yOffset: CGFloat
-        if #available(iOS 11, *) {
-            yOffset = UIApplication.shared.keyWindow?.safeAreaInsets.top ?? 0
-        }
-        else {
-            yOffset = 0
-        }
-        let side: CGFloat = 28.0
-        
-        let closeButton = self.closeButton ?? UIButton(frame: CGRect(x: Device.current.hasRoundedDisplayCorners ? 16.0 : 8.0,
-                                                                     y: yOffset + (Device.current.hasRoundedDisplayCorners ? 8.0 : 24.0),
-                                                                     width: side,
-                                                                     height: side))
-        
-       // let closeButton = self.closeButton ?? UIButton(frame: CGRect(x: 8.0, y: yOffset + 8.0, width: side, height: side))
+        let closeButton = self.closeButton ?? UIButton(frame: .zero)
         if self.closeButton?.superview == nil {
             if let icon = OZSDK.customization.cancelButtonCustomization.customImage {
                 closeButton.setImage(icon, for: UIControl.State.normal)
-                closeButton.sizeToFit()
-            }
-            else {
+            } else {
                 closeButton.setImage(OZResources.closeButtonImage, for: UIControl.State.normal)
             }
             closeButton.addTarget(self, action: #selector(closeAction(sender:)), for: .touchUpInside)
             closeButton.setTitleColor(buttonColor, for: .normal)
             closeButton.setTitleColor(buttonColor.withAlphaComponent(0.3), for: .highlighted)
             closeButton.setTitleColor(buttonColor.withAlphaComponent(0.1), for: .disabled)
-            
+            closeButton.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(closeButton)
+            
+            NSLayoutConstraint.activate([
+                closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4.0),
+                closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20.0),
+                closeButton.widthAnchor.constraint(equalToConstant: 24.0),
+                closeButton.heightAnchor.constraint(equalToConstant: 24.0)
+            ])
+            
             self.closeButton = closeButton
         }
         self.closeButton?.isEnabled = true

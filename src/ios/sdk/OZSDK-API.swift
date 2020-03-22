@@ -254,6 +254,6 @@ public enum AnalyseResolutionStatus: String {
     case operatorRequired   = "OPERATOR_REQUIRED"
 }
 
-public enum OZLocalizationCode {
-    case ru, en
+public enum OZLocalizationCode: String {
+    case ru, en, hy
 }

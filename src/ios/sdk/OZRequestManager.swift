@@ -270,7 +270,7 @@ extension DataResponse {
 }
 
 public extension Error {
-    public var ozErrorMessage: String {
+    var ozErrorMessage: String {
         get {
             return (self as? ResponseError)?.localizedDescription ?? self.localizedDescription
         }
