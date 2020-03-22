@@ -18,22 +18,24 @@
          <string>App uses camera.</string>
        </config-file>
 
-      <!-- iOS platform  source and resource files -->
-      <source-file src="src/ios/src/BiometricAuthentication.swift" target-dir = "src"/>
+      <!-- iOS platform source and resource files -->
+      <source-file src="src/ios/src/BiometricAuthentication.swift"/>
+      <source-file src="src/ios/src/UIColor+Hex.swift"/>
       <!-- OZLivenessSDK source files -->
-      <source-file src="src/ios/sdk/OZFileVideoManager.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZFrameView.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZFrameViewController.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZLivenessViewController.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZRequestManager.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZResources.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZSDK-API.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZSDK.swift" target-dir = "sdk"/>
-      <source-file src="src/ios/sdk/OZUI.swift" target-dir = "sdk"/>
+      <source-file src="src/ios/sdk/OZFileVideoManager.swift" />
+      <source-file src="src/ios/sdk/OZFrameView.swift" />
+      <source-file src="src/ios/sdk/OZFrameViewController.swift" />
+      <source-file src="src/ios/sdk/OZLivenessViewController.swift" />
+      <source-file src="src/ios/sdk/OZRequestManager.swift" />
+      <source-file src="src/ios/sdk/OZResources.swift" />
+      <source-file src="src/ios/sdk/OZSDK-API.swift" />
+      <source-file src="src/ios/sdk/OZSDK.swift" />
+      <source-file src="src/ios/sdk/OZUI.swift" />
       <!-- iOS platform OZLivenessSDK resource files -->
-      <source-file src="src/ios/res/GoogleService-Info.plist" target-dir = "res" />
-      <source-file src="src/ios/res/localization.json" target-dir = "res" />
-      <source-file src="src/ios/res/closebutton.png" target-dir = "res" />
+      <source-file src="src/ios/res/GoogleService-Info.plist"  />
+      <resource-file src="src/ios/res/OZLocalizationBundle.bundle"  />
+      <resource-file src="src/ios/res/OZResourceBundle.bundle" />
+
       <!-- iOS platform frameworks -->
       <podspec>
          <config>
@@ -46,6 +48,7 @@
            <pod name="Firebase/Core" spec="5.2.0" />
            <pod name="Firebase/MLVision" spec="5.2.0" />
            <pod name="Firebase/MLVisionFaceModel" spec="5.2.0" />
+           <pod name="SVProgressHUD" spec="2.2.5" />
          </pods>
        </podspec>
    </platform>

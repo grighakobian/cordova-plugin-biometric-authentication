@@ -8,27 +8,30 @@
 import Foundation
 
 class OZResources {
+    
+    static var localizationCode: String? {
+        return (OZSDK.localizationCode ?? .en).rawValue
+    }
+    
     private init() { }
     
-    private static var baseLocalization: [String: Any] = {
-        let baseJsonURL = Bundle.main.url(forResource: "localization", withExtension: "json")!
-        let baseJsonData = try! Data(contentsOf: baseJsonURL)
-        let jsonObject = try! JSONSerialization.jsonObject(with: baseJsonData, options: .mutableContainers) as! [String: Any]
-        return jsonObject
-    }()
+    private static func bundle(key : String = "OZResourceBundle") -> Bundle {
+        let path = Bundle(for: OZResources.self).path(forResource: key, ofType: "bundle")!
+        return Bundle(path: path) ?? Bundle.main
+    }
     
     static var closeButtonImage : UIImage? {
-        return UIImage(named: "closebutton", in: Bundle.main, compatibleWith: nil)
+        return UIImage(named: "closebutton", in: self.bundle(), compatibleWith: nil)
     }
     
     static func localized(key: String) -> String {
-        let locale = (OZSDK.localizationCode ?? .en).rawValue
-        if let localization = baseLocalization[locale] as? [String: Any] {
-            var localizedString = localization[key] as? String ?? key
-            localizedString = localizedString.replacingOccurrences(of: "\\n", with: "\n")
-            return localizedString
+        var bundle = self.bundle(key: "OZLocalizationBundle")
+        if let languageCode = localizationCode {
+            if let path = bundle.path(forResource: languageCode, ofType: "lproj") {
+                bundle = Bundle(path: path) ?? bundle
+            }
         }
-        return key
+        
+        return NSLocalizedString(key, tableName: "Localizable", bundle: bundle, comment: "")
     }
 }
-

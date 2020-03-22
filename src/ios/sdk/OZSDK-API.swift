@@ -152,6 +152,7 @@ public enum OZAnalysesState: String {
 @objc public protocol OZVerificationDelegate: NSObjectProtocol {
     /** Метод, возвращающий результаты liveness-проверки. */
     @objc func onOZVerificationResult(results: [OZVerificationResult])
+//    @objc func onOZVerificationUserCancelled()
 }
 
 /** Структура, содержащая результат liveness-проверки. */

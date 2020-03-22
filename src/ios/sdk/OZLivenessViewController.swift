@@ -856,6 +856,7 @@ class OZLivenessViewController: OZFrameViewController {
         }
     }
     
+
     @objc override func closeAction(sender: UIButton?) {
         // TODO: переписать
         if sender != nil {
@@ -865,7 +866,6 @@ class OZLivenessViewController: OZFrameViewController {
                                               timestamp: Date())
             self.videos.append(result)
         }
-        
         self.closeAction(withDelegate: sender != nil)
     }
     
