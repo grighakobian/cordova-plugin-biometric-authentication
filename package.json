@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-biometric-authentication",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Biometric authentication plugin for Cordova",
   "cordova": {
     "id": "cordova-plugin-biometric-authentication",

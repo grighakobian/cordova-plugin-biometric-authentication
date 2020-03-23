@@ -41,7 +41,9 @@
       <resource-file src="src/ios/res/OZResourceBundle.bundle" />
 
       <!-- iOS platform frameworks -->
-      <podspec>
+      <framework src="Alamofire" type="podspec" spec="4.9.0" />
+
+      <!-- <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
          </config>
@@ -54,7 +56,7 @@
            <pod name="Firebase/MLVisionFaceModel" spec="5.2.0" swift-version="4.2" />
            <pod name="SVProgressHUD" spec="2.2.5" swift-version="4.2" />
          </pods>
-       </podspec>
+       </podspec> -->
    </platform>
 
    <!-- Android platform  conifigurations -->
