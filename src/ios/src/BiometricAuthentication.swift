@@ -55,7 +55,7 @@ class BiometricAuthentication : CDVPlugin {
         login()
         
         SVProgressHUD.setHapticsEnabled(false)
-        SVProgressHUD.setForegroundColor(UIColor.hexa(0x6400dc))
+        SVProgressHUD.setForegroundColor(UIColor.hex(0x6400dc))
         SVProgressHUD.setDefaultMaskType(.custom)
         SVProgressHUD.setBackgroundLayerColor(UIColor(white: 0, alpha: 0.2))
         SVProgressHUD.setRingThickness(4.0)
