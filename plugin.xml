@@ -5,6 +5,10 @@
       <clobbers target="biometricauthentication" />
    </js-module>
 
+   <engines>
+      <engine name="cordova" version=">=9.0.0" />
+    </engines>
+
    <!-- iOS platform  conifigurations -->
    <platform name="ios">
       <!-- iOS platform  conifiguration files -->
@@ -32,7 +36,7 @@
       <source-file src="src/ios/sdk/OZSDK.swift" />
       <source-file src="src/ios/sdk/OZUI.swift" />
       <!-- iOS platform OZLivenessSDK resource files -->
-      <source-file src="src/ios/res/GoogleService-Info.plist"  />
+      <resource-file src="src/ios/res/GoogleService-Info.plist"  />
       <resource-file src="src/ios/res/OZLocalizationBundle.bundle"  />
       <resource-file src="src/ios/res/OZResourceBundle.bundle" />
 

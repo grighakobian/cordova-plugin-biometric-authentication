@@ -164,12 +164,21 @@ class OZFrameViewController: UIViewController {
             closeButton.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(closeButton)
             
-            NSLayoutConstraint.activate([
-                closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4.0),
-                closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20.0),
-                closeButton.widthAnchor.constraint(equalToConstant: 24.0),
-                closeButton.heightAnchor.constraint(equalToConstant: 24.0)
-            ])
+            if #available(iOS 11.0, *) {
+                NSLayoutConstraint.activate([
+                    closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4.0),
+                    closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20.0),
+                    closeButton.widthAnchor.constraint(equalToConstant: 24.0),
+                    closeButton.heightAnchor.constraint(equalToConstant: 24.0)
+                ])
+            } else {
+                NSLayoutConstraint.activate([
+                    closeButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 4.0),
+                    closeButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: -20.0),
+                    closeButton.widthAnchor.constraint(equalToConstant: 24.0),
+                    closeButton.heightAnchor.constraint(equalToConstant: 24.0)
+                ])
+            }
             
             self.closeButton = closeButton
         }

@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-biometric-authentication",
-  "version": "0.0.1",
+  "version": "0.1.2",
   "description": "Biometric authentication plugin for Cordova",
   "cordova": {
     "id": "cordova-plugin-biometric-authentication",
@@ -15,5 +15,13 @@
     "cordova-android"
   ],
   "author": "Grigor Hakobyan",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://grighakobian@github.com/grighakobian/cordova-plugin-biometric-authentication.git"
+  },
+  "bugs": {
+    "url": "https://github.com/grighakobian/cordova-plugin-biometric-authentication/issues"
+  },
+  "homepage": "https://github.com/grighakobian/cordova-plugin-biometric-authentication#readme"
 }
