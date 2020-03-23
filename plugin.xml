@@ -5,9 +5,9 @@
       <clobbers target="biometricauthentication" />
    </js-module>
 
-   <engines>
+   <!-- <engines>
       <engine name="cordova" version=">=9.0.0" />
-    </engines>
+    </engines> -->
 
    <!-- iOS platform  conifigurations -->
    <platform name="ios">
