@@ -22,7 +22,7 @@
          <string>App uses camera.</string>
        </config-file>
 
-       <hook type="before_plugin_install" src="scripts/prepareCocoaPods.js" />
+       <hook type="before_plugin_install" src="src/scripts/prepareCocoaPods.js" />
 
       <!-- iOS platform source and resource files -->
       <source-file src="src/ios/src/BiometricAuthentication.swift"/>
@@ -41,11 +41,10 @@
       <resource-file src="src/ios/res/GoogleService-Info.plist"  />
       <resource-file src="src/ios/res/OZLocalizationBundle.bundle"  />
       <resource-file src="src/ios/res/OZResourceBundle.bundle" />
-
       <!-- iOS platform frameworks -->
-      <framework src="Alamofire" type="podspec" spec="4.9.0" />
+      <!-- <framework src="Alamofire" type="podspec" spec="4.9.0" /> -->
 
-      <!-- <podspec>
+      <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
          </config>
@@ -58,7 +57,7 @@
            <pod name="Firebase/MLVisionFaceModel" spec="5.2.0" swift-version="4.2" />
            <pod name="SVProgressHUD" spec="2.2.5" swift-version="4.2" />
          </pods>
-       </podspec> -->
+       </podspec> 
    </platform>
 
    <!-- Android platform  conifigurations -->
