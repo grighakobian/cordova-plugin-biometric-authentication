@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-biometric-authentication" version="0.0.1">
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-biometric-authentication" version="0.0.1">
    <name>Biometric Authentication</name>
+   
    <js-module name="BiometricAuthentication" src="www/BiometricAuthentication.js">
-      <clobbers target="biometricauthentication" />
+      <clobbers target="BiometricAuthentication" />
    </js-module>
 
-   <!-- <engines>
-      <engine name="cordova" version=">=9.0.0" />
-    </engines> -->
+   <engines>
+      <engine name="cordova" version=">=6.4.0" />
+      <engine name="cordova-ios" version=">=4.3.0" />
+      <engine name="cordova-android" version=">=5.1.0" />
+      <engine name="apple-xcode" version=">=8.0.0" />
+      <engine name="apple-ios" version=">=7.0.0" />
+    </engines>
 
    <!-- iOS platform  conifigurations -->
    <platform name="ios">
@@ -42,22 +47,27 @@
       <resource-file src="src/ios/res/OZLocalizationBundle.bundle"  />
       <resource-file src="src/ios/res/OZResourceBundle.bundle" />
       <!-- iOS platform frameworks -->
-      <!-- <framework src="Alamofire" type="podspec" spec="4.9.0" /> -->
 
-      <podspec>
+      <framework src="Alamofire" type="podspec" spec="4.9.0"/>
+      <framework src="DeviceKit" type="podspec" spec="2.1.0"/>
+      <framework src="Firebase/Core" type="podspec"/>
+      <framework src="SVProgressHUD" type="podspec"/>
+      <framework src="Firebase/MLVision" type="podspec" spec="~> 5.2.0"/>
+      <framework src="Firebase/MLVisionFaceModel" type="podspec" spec="~> 5.2.0"/>
+      
+      <!-- <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
          </config>
          <pods use-frameworks="true">
            <pod name="Alamofire" spec="4.9.0" />
            <pod name="DeviceKit" spec="2.1.0" />
-           <pod name="Firebase" spec="6.21.0"/>
-           <pod name="Firebase/Core" spec="6.6.5"/>
-           <pod name="Firebase/MLVision" spec="0.19.0"/>
-           <pod name="Firebase/MLVisionFaceModel" spec="0.19.0" />
-           <pod name="SVProgressHUD" spec="2.2.5" />
+           <pod name="Firebase/Core" />
+           <pod name="Firebase/MLVision" spec="5.2.0"/>
+           <pod name="Firebase/MLVisionFaceModel" spec="5.2.0"/>
+           <pod name="SVProgressHUD" />
          </pods>
-       </podspec> 
+       </podspec>  -->
    </platform>
 
    <!-- Android platform  conifigurations -->
