@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" 
       xmlns:android="http://schemas.android.com/apk/res/android" 
-      id="cordova-plugin-biometric-authentication" version="1.1.4">
+      id="cordova-plugin-biometric-authentication" version="1.1.5">
    
    
    <name>Biometric Authentication</name>
@@ -53,10 +53,11 @@
 
       <framework src="Alamofire" type="podspec" spec="4.9.0"/>
       <framework src="DeviceKit" type="podspec" spec="2.1.0"/>
-      <framework src="Firebase/Core" type="podspec"/>
-      <framework src="SVProgressHUD" type="podspec"/>
-      <framework src="Firebase/MLVision" type="podspec" spec="~> 5.2.0"/>
-      <framework src="Firebase/MLVisionFaceModel" type="podspec" spec="~> 5.2.0"/>
+      <framework src="Firebase" type="podspec" spec="6.21.0"/>
+      <!-- <framework src="FirebaseCore" type="podspec" spec="6.6.5"/> -->
+      <framework src="SVProgressHUD" type="podspec" spec="2.2.5"/>
+      <framework src="FirebaseMLVision" type="podspec" spec="0.19.0"/>
+      <framework src="FirebaseMLVisionFaceModel" type="podspec" spec="0.19.0"/>
       
       <!-- <podspec>
          <config>
