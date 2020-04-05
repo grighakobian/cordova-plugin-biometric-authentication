@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-biometric-authentication" version="0.0.1">
-   <name>Biometric Authentication</name>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" 
+      xmlns:android="http://schemas.android.com/apk/res/android" 
+      id="cordova-plugin-biometric-authentication" version="1.1.4">
    
+   
+   <name>Biometric Authentication</name>
    <js-module name="BiometricAuthentication" src="www/BiometricAuthentication.js">
-      <clobbers target="BiometricAuthentication" />
+      <clobbers target="biometricauthentication" />
    </js-module>
 
    <engines>
