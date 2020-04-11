@@ -229,9 +229,9 @@ class OZFrameViewController: UIViewController {
     
     lazy var faceDetectorOptions: VisionFaceDetectorOptions = {
         let options = VisionFaceDetectorOptions()
-        options.performanceMode = .fast
-        options.landmarkMode = .all
-        options.classificationMode = .all
+        options.modeType = .fast
+        options.landmarkType = .all
+        options.classificationType = .all
         return options
     }()
     
@@ -255,7 +255,7 @@ class OZFrameViewController: UIViewController {
         let visionImage = VisionImage(buffer: buffer)
         visionImage.metadata = self.metadata
         let faceDetector = vision.faceDetector(options: faceDetectorOptions)
-        faceDetector.process(visionImage) { [weak self] faces, error in
+        faceDetector.detect(in: visionImage) { [weak self] faces, error in
             self?.process(faces: faces ?? []) { [weak self] in
                 self?.blockDetection = false
                 self?.mlKitFPS = 1/CGFloat(-date.timeIntervalSinceNow)
