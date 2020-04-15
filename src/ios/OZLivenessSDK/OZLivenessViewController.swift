@@ -10,6 +10,7 @@ import Foundation
 import AVFoundation
 import UIKit
 import FirebaseMLVision
+import DeviceKit
 
 private enum ActionStatus {
     case start, preparing, run, waiting, final, cancel
@@ -33,9 +34,17 @@ private struct ActionState {
     var startRecordingTimestamp : Date? = nil
 }
 
+extension OZJournal {
+    
+}
+
 // MARK: Liveness
 
+@available(iOS 11.0, *)
 class OZLivenessViewController: OZFrameViewController {
+    
+    private     let scenarioId  = UUID().uuidString
+    fileprivate var actionId    = UUID().uuidString
     
     weak var delegate: OZVerificationDelegate?
     
@@ -45,7 +54,11 @@ class OZLivenessViewController: OZFrameViewController {
         }
     }
     
-    private var _actions: [OZVerificationMovement] = []
+    private var _actions: [OZVerificationMovement] = [] {
+        didSet {
+            actionId = UUID().uuidString
+        }
+    }
     
     private var currentAction: OZVerificationMovement? {
         get { return _actions.first }
@@ -77,13 +90,60 @@ class OZLivenessViewController: OZFrameViewController {
     private let nonClosedEyesThreshold  : CGFloat = OZSDK.thresholdSettings.startEyesOpenProbability
     private let centerYThreshold        : CGFloat = OZSDK.thresholdSettings.centerEulerAngleY
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.addJournalEntry(isAction: false, event: .livenessCheckStart)
+        self.addJournalEntry(isAction: true, event: .actionStart)
+    }
+    
+    // MARK: -
+    
+    func addJournalEntry(isAction: Bool, event: OZJournalEvent, context: OZJournalContext = [:]) {
+        if isAction {
+            OZJournal.sharedInstance.addEntry(event: event, context: context + actionContext, actionSessionId: actionId, scenarioSessionId: scenarioId)
+        }
+        else {
+            OZJournal.sharedInstance.addEntry(event: event, context: context + scenarioContext, scenarioSessionId: scenarioId)
+        }
+    }
+    
+    var scenarioContext: OZJournalContext {
+        get {
+            return ["actions": actions.map({ (action) -> String in
+                return action.code
+            })]
+        }
+    }
+    
+    var actionContext: OZJournalContext {
+        get {
+            if let actionCode = currentAction?.code {
+                var attemptCountContext: OZJournalContext = [:]
+                if let commonCount = OZSDK.attemptSettings.commonCount {
+                    attemptCountContext["remaining_common"] = commonCount - self.commonTryCount
+                    attemptCountContext["common"] = commonCount
+                }
+                if let singleCount = OZSDK.attemptSettings.singleCount {
+                    attemptCountContext["remaining_single"] = singleCount - self.actionState.tryCount
+                    attemptCountContext["single"] = singleCount
+                }
+                let context = [
+                    "current_action": actionCode,
+                    "attempt_count": attemptCountContext
+                    ] as [String : Any]
+                return context + scenarioContext
+            }
+            return self.scenarioContext
+        }
+    }
+    
     // MARK: - Timer
     
     private func setTimer() {
         self.timer?.invalidate()
         self.timer = Timer.scheduledTimer(timeInterval: livenessTimeInterval + livenessOffsetTimeInterval,
                                           target: self,
-                                          selector: #selector(livenessTimeout),
+                                          selector: #selector(completeAction),
                                           userInfo: nil,
                                           repeats: false)
     }
@@ -104,7 +164,17 @@ class OZLivenessViewController: OZFrameViewController {
         }
     }
     
-    private func restartAction() {
+    private func startAction() {
+        self.addJournalEntry(isAction: true, event: .actionStart)
+        self.runAction()
+    }
+    
+    private func restartAction(_ restartReasonMessage: String = "") {
+        self.addJournalEntry(isAction: true, event: .actionRestart, context: ["message" : restartReasonMessage])
+        self.runAction()
+    }
+    
+    private func runAction() {
         DispatchQueue.main.async {
             self.actionState.isSuccess = false
             self.actionState.status = .start
@@ -135,7 +205,7 @@ class OZLivenessViewController: OZFrameViewController {
                                                   videoURL: nil,
                                                   timestamp: Date())
                 self.videos.append(result)
-                self.closeAction(withDelegate: true)
+                self.closeAction("Common attempts exceeded", withDelegate: true) // ""Превышено общее число попыток""
             }
             else if let singleCount = OZSDK.attemptSettings.singleCount, self.actionState.tryCount > singleCount {
                 let result = OZVerificationResult(status: .failedBecauseOfAttemptLimit,
@@ -143,14 +213,14 @@ class OZLivenessViewController: OZFrameViewController {
                                                   videoURL: nil,
                                                   timestamp: Date())
                 self.videos.append(result)
-                self.closeAction(withDelegate: true)
+                self.closeAction("Exceeded the number of attempts for a single gesture", withDelegate: true) // "Превышено число попыток для отдельного жеста"
             }
             else {
                 self.showAlert()
             }
         }
         else {
-            self.closeAction(withDelegate: true)
+            self.closeAction("All actions completed", withDelegate: true) // "Жесты выполнены"
         }
     }
     
@@ -177,11 +247,18 @@ class OZLivenessViewController: OZFrameViewController {
         }
     }
     
-    @objc private func livenessTimeout() {
+    @objc private func completeAction() {
+        self.completeAction("")
+    }
+    
+    private func completeAction(_ reasonMessage: String = "") {
         self.invalidateTimers()
         self.frameView?.cancelAllAnimations()
         self.actionState.status = .cancel
+        let actionId    = self.actionId
+        let scenarioId  = self.scenarioId
         DispatchQueue.main.async { [weak self] in
+            self?.addJournalEntry(isAction: true, event: .actionFinish, context: ["message": reasonMessage])
             guard let self = self, let currentAction = self.currentAction else { return }
             self.actionButton?.isHidden = false
             
@@ -195,7 +272,7 @@ class OZLivenessViewController: OZFrameViewController {
                 if self._actions.count > 1 {
                     self._actions.remove(at: 0)
                     if self._actions.count > 0 {
-                        self.restartAction()
+                        self.startAction()
                     }
                     return
                 }
@@ -215,7 +292,7 @@ class OZLivenessViewController: OZFrameViewController {
                                                 message:    OZResources.localized(key: "FailAttention.Alert.Message"),
                                                 okTitle:    OZResources.localized(key: "FailAttention.Alert.OkTitle"),
                                                 okAction: { [weak self] in
-                self?.restartAction()
+                self?.restartAction("Action restart after displaying alert") // "Повторная попытка, после отображения алерта"
                 self?.actionState.status = .start
                 },
                                                 cancelTitle: OZResources.localized(key: "FailAttention.Alert.CancelTitle"),
@@ -231,7 +308,7 @@ class OZLivenessViewController: OZFrameViewController {
         if self.frameView == nil || !view.subviews.contains(self.frameView!) {
             let ovalView = self.frameView ?? OZOvalView(frame: videoPreviewLayer.frame)
             ovalView.lineWidth = OZSDK.customization.ovalCustomization.strokeWidth
-            ovalView.fillColor = OZSDK.customization.frameCustomization.backgroundColor
+//            ovalView.fillColor = OZSDK.customization.frameCustomization.backgroundColor
             ovalView.strokeColor = OZSDK.customization.ovalCustomization.failStrokeColor
             if !view.subviews.contains(ovalView) {
                 view.addSubview(ovalView)
@@ -248,6 +325,7 @@ class OZLivenessViewController: OZFrameViewController {
         case .smile, .eyes, .down, .up, .left, .right, .scanning:
             self.frameView?.frameSize = nFaceFrame
         }
+//        self.frameView?.changeOpacity(showFace: true)
         self.frameView?.alpha = 1
         self.view.layoutSubviews()
     }
@@ -291,11 +369,11 @@ class OZLivenessViewController: OZFrameViewController {
     
     private var startTimestamp: Date = Date()
     
-    private func fullRestartAction(completion: @escaping (() -> Void)) {
+    private func fullRestartAction(_ restartReasonMessage: String = "", completion: @escaping (() -> Void)) {
         self.invalidateTimers()
         self.frameView?.layer.removeAllAnimations()
-        self.restartAction()
-        self.showAttentionMessage(errorState: .noface)
+        self.restartAction(restartReasonMessage)
+        self.changeFaceReplacementState(state: .noface)
         self.scanningLabel.layer.removeAllAnimations()
         self.stopRecording { [weak self] in
             self?.actionState.status = .start
@@ -307,6 +385,17 @@ class OZLivenessViewController: OZFrameViewController {
         if let face = faces.first, let ovalViewPosition = frameView?.currentPathFrame.origin, let ovalViewSize = frameView?.currentPathFrame.size, let currentAction = currentAction {
             switch currentAction {
             case .close, .far:
+                if self.actionState.status == .run || self.actionState.status == .preparing, let firstFace = _firstFace {
+                    let proportion = self.faceToFrameProportion(face: face)
+                    let referenceProportion = self.faceToFrameProportion(face: firstFace)
+                    if proportion < 0.8 && referenceProportion + 0.03 < proportion {
+                        self.changeInfo(text: OZResources.localized(key: "Action.Close.EvenCloser"))
+                    }
+                    else if proportion > 1.2 && referenceProportion - 0.03 > proportion {
+                        self.changeInfo(text: OZResources.localized(key: "Action.Close.EvenFurther"))
+                    }
+                }
+
                 self.thresholdProcess(currentAction:    currentAction,
                                       face:             face,
                                       refFrameSize:     ovalViewSize,
@@ -346,7 +435,7 @@ class OZLivenessViewController: OZFrameViewController {
             }
         }
         else {
-            showAttentionMessage(errorState: .noface)
+            self.changeFaceReplacementState(state: .noface)
             completion()
         }
     }
@@ -356,7 +445,7 @@ class OZLivenessViewController: OZFrameViewController {
     override func process(faces: [VisionFace], completion: @escaping (() -> Void)) {
         if faces.count > 1 {
             if !actionState.isSuccess {
-                self.fullRestartAction {
+                self.fullRestartAction("There are more than 1 face in the frame") { [weak self] in // "В кадре больше, чем 1 лицо"
                     completion()
                 }
             }
@@ -374,7 +463,7 @@ class OZLivenessViewController: OZFrameViewController {
         guard faceoutCount < 5 else {
             if actionState.status == .start || actionState.status == .run || actionState.status == .preparing {
                 if !actionState.isSuccess {
-                    self.fullRestartAction {
+                    self.fullRestartAction("Face left frame") { [weak self] in // "Лицо покинуло кадр"
                         completion()
                     }
                     return
@@ -383,6 +472,12 @@ class OZLivenessViewController: OZFrameViewController {
                     completion()
                     return
                 }
+            }
+            else if actionState.status == .waiting || actionState.status == .final {
+                self.fullRestartAction("Face left frame") { [weak self] in // "Лицо покинуло кадр"
+                    completion()
+                }
+                return
             }
             else {
                 completion()
@@ -410,7 +505,7 @@ class OZLivenessViewController: OZFrameViewController {
     
     private var lastAttentionMessageTimestamp = Date()
     
-    private func showAttentionMessage(errorState: FaceReplacementState? = nil) {
+    private func showAttentionMessage(replacementState: FaceReplacementState? = nil) {
         guard -self.lastAttentionMessageTimestamp.timeIntervalSinceNow > 0.5 else {
             return
         }
@@ -431,7 +526,7 @@ class OZLivenessViewController: OZFrameViewController {
             frameView?.strokeColor = OZSDK.customization.ovalCustomization.failStrokeColor
         }
         
-        if let text = errorState?.text, text.count > 0, self.actionState.status == .start || self.actionState.status == .preparing {
+        if let text = replacementState?.text, text.count > 0, self.actionState.status == .start || self.actionState.status == .preparing {
             changeInfo(text: text)
         }
     }
@@ -476,6 +571,20 @@ class OZLivenessViewController: OZFrameViewController {
                 videoPreviewLayer.frame.contains(lbFacePoint)
     }
     
+    private func faceToFrameProportion(face: VisionFace) -> CGFloat {
+        guard let ovalSize = frameView?.frameSize else {
+            return 0
+        }
+        let faceFrame = self.getMLKitFrame(face: face)
+        let faceSize = CGSize(
+            width:  faceFrame.size.height / faceProportion,
+            height: faceFrame.size.height
+        )
+        
+        return faceSize.width / ovalSize.width
+        
+    }
+    
     private func thresholdProcess(currentAction: OZVerificationMovement, face: VisionFace, refFrameSize: CGSize, refFramePosition: CGPoint, successHandler: (() -> Void), completion: @escaping (() -> Void)) {
         guard let videoPreviewLayer = videoPreviewLayer else {
             return
@@ -495,21 +604,13 @@ class OZLivenessViewController: OZFrameViewController {
         var nonnonOpenEyes  = true
         var straight        = true
         var withoutIncline  = true
-        let cuttedFace = !self.isFullFaceInFrame(face: face)
+        var cuttedFace = !self.isFullFaceInFrame(face: face)
         
         condition = condition && !cuttedFace
         
         if condition, currentAction == .smile, actionState.status == .start || actionState.status == .preparing {
             nonSmile = face.hasSmilingProbability && (face.smilingProbability < nonSmileThreshold)
             condition = condition && nonSmile
-        }
-        
-        if condition, currentAction == .eyes, actionState.status == .start || actionState.status == .preparing {
-            nonnonOpenEyes =    face.hasLeftEyeOpenProbability &&
-                                face.hasRightEyeOpenProbability &&
-                
-                min(face.leftEyeOpenProbability, face.rightEyeOpenProbability) > (1 - nonClosedEyesThreshold)
-            condition = condition && nonnonOpenEyes
         }
         
         if condition, actionState.status == .start || actionState.status == .preparing {
@@ -527,35 +628,42 @@ class OZLivenessViewController: OZFrameViewController {
             condition = condition && withoutIncline
         }
         
+        if condition, actionState.status == .start || actionState.status == .preparing {
+            nonnonOpenEyes =    face.hasLeftEyeOpenProbability &&
+                                face.hasRightEyeOpenProbability &&
+                
+                min(face.leftEyeOpenProbability, face.rightEyeOpenProbability) > (1 - nonClosedEyesThreshold)
+            condition = condition && nonnonOpenEyes
+        }
+        
         if condition {
             successHandler()
             return
         }
         else {
+            var state: FaceReplacementState? = nil
             if hDeviation < -hThreshold * videoPreviewLayer.frame.height {
-                showAttentionMessage(errorState: .far)
+                state = .far
             }
             else if hDeviation > hThreshold * videoPreviewLayer.frame.height {
-                showAttentionMessage(errorState: .close)
+                state = .close
             }
             if abs(dx) > сThreshold || abs(dy) > сThreshold || cuttedFace {
-                showAttentionMessage(errorState: .noface)
+                state = .noface
             }
             else if !straight {
-                showAttentionMessage(errorState: .indirect)
+                state = .indirect
             }
             else if !withoutIncline {
-                showAttentionMessage(errorState: .withoutIncline)
+                state = .withoutIncline
             }
             else if !nonSmile {
-                showAttentionMessage(errorState: .smile)
+                state = .smile
             }
             else if !nonnonOpenEyes {
-                showAttentionMessage(errorState: .closedEyes)
+                state = .closedEyes
             }
-            else {
-                showAttentionMessage()
-            }
+            self.changeFaceReplacementState(state: state)
         }
         completion()
     }
@@ -569,22 +677,22 @@ class OZLivenessViewController: OZFrameViewController {
     
     private var _firstFace: VisionFace?
     
-    private let successfulLivenessCheckText = OZResources.localized(key: "SuccessfulLivenessCheck")
+    private let successfulLivenessCheckText = OZResources.localized(key: "FinalWaitingLivenessCheck")
     
     private func faceDynamicProcess(face: VisionFace, completion: @escaping (() -> Void)) {
         if self.actionState.status == .start {
             self.frameView?.strokeColor = OZSDK.customization.ovalCustomization.successStrokeColor
-            self.changeInfo(text: FaceReplacementState.fixRequired.text)
+            self.changeFaceReplacementState(state: FaceReplacementState.fixRequired)
             self.actionState.status = .preparing
             self.preparingTimer = Timer.scheduledTimer(timeInterval: livenessPreparingTimeInterval,
                                                        target: self,
                                                        selector: #selector(setRunStatus),
                                                        userInfo: nil,
                                                        repeats: false)
-            
+            _firstFace = face
         }
         else if self.actionState.status == .preparing {
-            _firstFace = face
+            
         }
         else if self.actionState.status == .run {
             self.actionState.isSuccess = true
@@ -594,7 +702,7 @@ class OZLivenessViewController: OZFrameViewController {
             self.invalidateTimers()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?._stopRecording { [weak self] in
-                    self?.livenessTimeout()
+                    self?.completeAction("Action completed") // "Жест выполнен"
                     completion()
                     return
                 }
@@ -636,7 +744,7 @@ class OZLivenessViewController: OZFrameViewController {
     private func faceScanning(face: VisionFace, completion: @escaping (() -> Void)) {
         if self.actionState.status == .start {
             self.frameView?.strokeColor = OZSDK.customization.ovalCustomization.successStrokeColor
-            self.changeInfo(text: FaceReplacementState.fixRequired.text)
+            self.changeFaceReplacementState(state: FaceReplacementState.fixRequired)
             self.actionState.status = .preparing
             self.preparingTimer = Timer.scheduledTimer(timeInterval: livenessPreparingTimeInterval,
                                                        target: self,
@@ -654,7 +762,7 @@ class OZLivenessViewController: OZFrameViewController {
         else if self.actionState.status == .run {
             if self.scanningState == .start {
                 self.scanningState = .run
-                self.frameView?.alpha = 0
+//                self.frameView?.alpha = 0
                 self.changeInfo(text: "")
                 
                 scanningLabel.frame = CGRect(
@@ -708,11 +816,11 @@ class OZLivenessViewController: OZFrameViewController {
                 self.closeButton?.isEnabled = false
                 self.actionState.status = .waiting
                 self.invalidateTimers()
+                completion()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                     
                     self?._stopRecording { [weak self] in
-                        self?.livenessTimeout()
-                        completion()
+                        self?.completeAction("Scanning completed") // "Сканирование завершено"
                         return
                     }
                 }
@@ -727,7 +835,7 @@ class OZLivenessViewController: OZFrameViewController {
     private func faceStaticProcess(action: OZVerificationMovement, face: VisionFace, completion: @escaping (() -> Void)) {
         if self.actionState.status == .start {
             self.frameView?.strokeColor = OZSDK.customization.ovalCustomization.successStrokeColor
-            self.changeInfo(text: FaceReplacementState.fixRequired.text)
+            self.changeFaceReplacementState(state: FaceReplacementState.fixRequired)
             self.actionState.status = .preparing
             self.preparingTimer = Timer.scheduledTimer(timeInterval: livenessPreparingTimeInterval,
                                                        target: self,
@@ -790,10 +898,10 @@ class OZLivenessViewController: OZFrameViewController {
                 self.closeButton?.isEnabled = false
                 self.actionState.status = .waiting
                 self.invalidateTimers()
+                completion()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                     self?._stopRecording { [weak self] in
-                        self?.livenessTimeout()
-                        completion()
+                        self?.completeAction("Action completed") // "Жест выполнен"
                         return
                     }
                 }
@@ -822,6 +930,7 @@ class OZLivenessViewController: OZFrameViewController {
     
     @objc func startAction(sender: UIButton?) {
         self.actionState.isSuccess = false
+//        self.frameView?.changeOpacity(showFace: false)
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             sender?.isHidden = true
@@ -856,7 +965,6 @@ class OZLivenessViewController: OZFrameViewController {
         }
     }
     
-
     @objc override func closeAction(sender: UIButton?) {
         // TODO: переписать
         if sender != nil {
@@ -866,68 +974,115 @@ class OZLivenessViewController: OZFrameViewController {
                                               timestamp: Date())
             self.videos.append(result)
         }
-        self.closeAction(withDelegate: sender != nil)
+        
+        self.closeAction("User close liveness controller", withDelegate: sender != nil) // "Пользователь покинул экран"
     }
     
-    private func closeAction(withDelegate: Bool = false) {
+    func closeAction(_ reasonMessage: String = "") {
+        self.closeAction(reasonMessage, withDelegate: false)
+    }
+    
+    private static var sSelf: OZLivenessViewController?
+    
+    private func closeAction(_ reasonMessage: String = "", withDelegate: Bool = false) {
+        
+        OZLivenessViewController.sSelf = self
+        
         self.actionState.status = .cancel
         self.invalidateTimers()
         
         
         if self.actionState.isRecording {
             closeButton?.isEnabled = false
-            self.stopRecording { [weak self] in
-                self?.close(withDelegate: withDelegate)
-            }
+            self.dismiss(animated: true, completion: { [unowned self] in
+                self.stopRecording { [unowned self] in
+                    self.close(reasonMessage, withDelegate: withDelegate)
+                }
+            })
         }
         else {
-            self.close(withDelegate: withDelegate)
+            self.dismiss(animated: true, completion: { [unowned self] in
+                self.close(reasonMessage, withDelegate: withDelegate)
+                
+            })
         }
     }
     
-    private func close(withDelegate: Bool = false) {
+    private func close(_ reasonMessage: String = "", withDelegate: Bool = false) {
+        self.addJournalEntry(isAction: false, event: .livenessCheckFinish, context: ["message": reasonMessage])
         self.closeButton?.isEnabled = false
         if self.actionState.isSuccess {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    if withDelegate {
-                        self.delegate?.onOZVerificationResult(results: self.videos)
-                    }
+            DispatchQueue.main.asyncAfter(deadline: .now()) { [unowned self] in
+                if withDelegate {
+                    self.delegate?.onOZVerificationResult(results: self.videos)
+                    OZLivenessViewController.sSelf = nil
                 }
             }
         }
         else {
-            self.dismiss(animated: true) { [weak self] in
-                guard let self = self else { return }
-                if withDelegate {
-                    self.delegate?.onOZVerificationResult(results: self.videos)
-                }
+            if withDelegate {
+                self.delegate?.onOZVerificationResult(results: self.videos)
+                OZLivenessViewController.sSelf = nil
             }
         }
     }
-
+    
+    private var _lastState: FaceReplacementState?
+    
+    private func changeFaceReplacementState(state: FaceReplacementState?) {
+        if let state = state {
+            if state == .fixRequired {
+                if state != _lastState {
+                    self.addJournalEntry(isAction: true, event: .actionFacePositionFixed)
+                }
+                self.changeInfo(text: state.text)
+            }
+            else {
+                self.showAttentionMessage(replacementState: state)
+            }
+        }
+        else {
+            showAttentionMessage()
+        }
+        _lastState = state
+    }
+    
+    fileprivate var operationQueue : OperationQueue = {
+        let operationQueue = OperationQueue()
+        operationQueue.maxConcurrentOperationCount = 1
+        return operationQueue
+    }()
+    
+    fileprivate var stopRecordingOperationQueue : OperationQueue = {
+        let operationQueue = OperationQueue()
+        operationQueue.maxConcurrentOperationCount = 1
+        return operationQueue
+    }()
+    
 }
 
 // MARK: - Capture
 
+@available(iOS 11.0, *)
 extension OZLivenessViewController {
     
     override func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard CMSampleBufferDataIsReady(sampleBuffer), let _ = currentAction else { return }
-        if self.actionState.status == .run || self.actionState.status == .waiting {
-            if self.actionState.isRecording && assetWriter?.status == .writing && sourceTime == nil {
-                sourceTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                if let sourceTime = sourceTime {
-                    assetWriter?.startSession(atSourceTime: sourceTime)
+        operationQueue.addOperation({ [weak self] in
+            guard let `self` = self, CMSampleBufferDataIsReady(sampleBuffer), let currentAction = self.currentAction else { return }
+            if self.actionState.status == .run || self.actionState.status == .waiting {
+                if self.actionState.isRecording && self.assetWriter?.status == .writing && self.sourceTime == nil {
+                    self.sourceTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                    if let sourceTime = self.sourceTime {
+                        self.assetWriter?.startSession(atSourceTime: sourceTime)
+                    }
+                }
+                
+                if self.assetWriterInput?.isReadyForMoreMediaData == true, self.sourceTime != nil  {
+                    self.assetWriterInput?.append(sampleBuffer)
                 }
             }
-            
-            if assetWriterInput?.isReadyForMoreMediaData == true, sourceTime != nil  {
-                assetWriterInput?.append(sampleBuffer)
-            }
-        }
-        self.detectFaces(in: sampleBuffer)
+            self.detectFaces(in: sampleBuffer)
+        })
     }
     
     private func pAssetWriter() {
@@ -938,14 +1093,10 @@ extension OZLivenessViewController {
             return
         }
         
-        var videoCodecType: Any = AVVideoCodecH264
-        if #available(iOS 11.0, *) {
-           videoCodecType = AVVideoCodecType.h264
-        }
         let assetWriterInput = AVAssetWriterInput(
             mediaType: .video,
             outputSettings: [
-                AVVideoCodecKey:    videoCodecType,
+                AVVideoCodecKey:    AVVideoCodecType.h264,
                 AVVideoWidthKey:    self.captureImageSize.width,
                 AVVideoHeightKey:   self.captureImageSize.height,
                 AVVideoCompressionPropertiesKey: [
@@ -966,6 +1117,8 @@ extension OZLivenessViewController {
         self.sourceTime = nil
         self.assetWriter = assetWriter
         self.assetWriterInput = assetWriterInput
+        
+        self.addJournalEntry(isAction: true, event: .actionRecordStart)
     }
     
     private func finishWriting(completionHandler handler: @escaping () -> Void){
@@ -977,8 +1130,10 @@ extension OZLivenessViewController {
     
     private func startRecording() {
         if !self.actionState.isRecording {
-            self.actionState.isRecording = true
-            self.pAssetWriter()
+            operationQueue.addOperation { [weak self] in
+                self?.actionState.isRecording = true
+                self?.pAssetWriter()
+            }
         }
     }
     
@@ -994,38 +1149,145 @@ extension OZLivenessViewController {
         }
     }
     
+    
+    
     private func _stopRecording(completion: @escaping (() -> Void)) {
-        // TODO: метод может не вызваться
+        
+        stopRecordingOperationQueue.cancelAllOperations()
+        
         guard self.actionState.isRecording else {
             return
         }
         var timeoffset: Double = 0
         let actionIsSuccess = actionState.isSuccess
-        if let videoL = self.actionState.startRecordingTimestamp?.timeIntervalSinceNow,
+        if let videoL = self.actionState.startRecordingTimestamp?.timeIntervalSinceNow as? Double,
             -videoL < self.minVideoLength,
             self.actionState.status == .waiting {
             timeoffset += self.minVideoLength + videoL
+            if timeoffset < 0 { timeoffset = 0 }
         }
+        let actionSessionId = self.actionId
+        let scenarioSessionId = self.scenarioId
+        
+        let operation = StopOperation()
+        stopRecordingOperationQueue.addOperation(operation)
         DispatchQueue.main.asyncAfter(deadline: .now() + timeoffset) { [weak self] in
+            operation.cancel()
+        }
+        let stopRecordingOperation = StopOperation()
+        stopRecordingOperation.mainBlock = { [weak self] in
             guard let self = self else { return }
-            self.actionState.status = .final
-            self.finishWriting { [weak self] in
+            self.operationQueue.addOperation { [weak self] in
                 guard let self = self else { return }
-                self.actionState.isRecording = false
-                DispatchQueue.main.async {
-                    self.view.isUserInteractionEnabled = true
-                }
-                if let url = self.assetWriter?.outputURL {
-                    if actionIsSuccess {
-                        self.actionState.outputURL = url
+                self.actionState.status = .final
+                self.finishWriting { [weak self] in
+                    self?.addJournalEntry(isAction: true, event: .actionRecordFinish)
+                    guard let self = self else { return }
+                    self.actionState.isRecording = false
+                    DispatchQueue.main.async {
+                        self.view.isUserInteractionEnabled = true
                     }
-                    else {
-                        OZFileVideoManager.deleteFile(url: url)
+                    if let url = self.assetWriter?.outputURL {
+                        if actionIsSuccess {
+                            self.actionState.outputURL = url
+                            self.addJournalEntry(isAction: true, event: .actionRecordSaved)
+                        }
+                        else {
+                            OZFileVideoManager.deleteFile(url: url)
+                        }
                     }
+                    completion()
+                    stopRecordingOperation.cancel()
                 }
-                completion()
             }
         }
+        stopRecordingOperationQueue.addOperation(stopRecordingOperation)
     }
 }
 
+class StopOperation: AsyncOperation { }
+class StartOperation: AsyncOperation { }
+
+
+class AsyncOperation: Operation {
+    
+    override class func automaticallyNotifiesObservers(forKey key: String) -> Bool {
+        return true
+    }
+    
+    init(mainBlock: (() -> Void)? = nil) {
+        self.mainBlock = mainBlock
+    }
+    
+    var mainBlock: (() -> Void)?
+    
+    enum State: String {
+        case ready, executing, finished
+        fileprivate var keyPath: KeyPath<AsyncOperation, Bool> {
+            switch self {
+            case .ready:
+                return \.isReady
+            case .executing:
+                return \.isExecuting
+            case .finished:
+                return \.isFinished
+            }
+        }
+    }
+    
+    var state: State = State.ready {
+        willSet {
+            willChangeValue(for: newValue.keyPath)
+            willChangeValue(for: state.keyPath)
+        }
+        didSet {
+            didChangeValue(for: oldValue.keyPath)
+            didChangeValue(for: state.keyPath)
+        }
+    }
+    
+    override var isReady: Bool {
+        return super.isReady && state == .ready
+    }
+    
+    override var isExecuting: Bool {
+        return state == .executing
+    }
+    
+    override var isFinished: Bool {
+        return state == .finished
+    }
+    
+    override var isAsynchronous: Bool {
+        return true
+    }
+    
+    override func start() {
+        if isCancelled {
+            state = .finished
+            return
+        }
+        main()
+        state = .executing
+    }
+    
+    private var canceling = false
+    
+    override func cancel() {
+        if isExecuting {
+            state = .finished
+        }
+        else {
+            canceling = true
+            state = .executing
+            state = .finished
+        }
+    }
+    
+    override func main() {
+        super.main()
+        if !canceling {
+            self.mainBlock?()
+        }
+    }
+}

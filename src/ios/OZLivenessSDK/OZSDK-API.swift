@@ -4,6 +4,7 @@ import UIKit
 
 
 /** Конфигурации внешнего вида OZ. */
+@available(iOS 11.0, *)
 public struct OZCustomization {
     
     /** Цвет текста.  */
@@ -13,14 +14,10 @@ public struct OZCustomization {
     
     /** Конфигурации для овала, ограничевающего область в которой должно размещаться лицо.  */
     public var ovalCustomization           : OZOvalCustomization
-    /** Конфигурации для рамки, ограничевающей область в которой должно размещаться лицо.  */
-    public var frameCustomization          : OZFrameCustomization
-    /** Конфигурации кнопки для возвращения назад с контроллеров, производящих liveness-проверку. */
-    public var cancelButtonCustomization   : OZCancelButtonCustomization
-
 }
 
 /** Конфигурации для овала, ограничевающего область в которой должно размещаться лицо. */
+@available(iOS 11.0, *)
 public struct OZOvalCustomization {
     /** Ширина контура овала. */
     public var strokeWidth              : CGFloat
@@ -31,6 +28,7 @@ public struct OZOvalCustomization {
 }
 
 /** Конфигурации для порогов, нужны для отладки жестов. Рекомендуется использовать значения по-умолчанию. */
+@available(iOS 11.0, *)
 public struct OZLivenessThresholdSettings {
     /** Порог ошибки для определения центра лица. */
     public var centerError  : CGFloat
@@ -65,25 +63,26 @@ public struct OZLivenessThresholdSettings {
     public var highFaceProbability : CGFloat
     /** Соотношение верхней и  нижней части лица без наклона. */
     public let normalFaceProportion : CGFloat = 1.2
+    
+    public var brightnessSetting : CGFloat = 0.3
 }
 
 /** Конфигурации для рамки, ограничевающей область в которой должно размещаться лицо. */
+@available(iOS 11.0, *)
 public struct OZFrameCustomization {
     /** Цвет фона рамки. */
     public var backgroundColor: UIColor
 }
 
-/** Конфигурации кнопки для возвращения назад с контроллеров, производящих liveness-проверку. */
-public struct OZCancelButtonCustomization {
-    /** Изображение для кнопки "назад/отмена".  */
-    public var customImage: UIImage?
-}
-
-
+@available(iOS 11.0, *)
 public var OZSDK: OZSDKProtocol = SDK()
 
 /** Интерфейс для конфигурирования SDK и получения результатов liveness-проверки. */
+@available(iOS 11.0, *)
 public protocol OZSDKProtocol {
+    
+    /** */
+    var journalObserver: ((String) -> Void) { get set }
     
     /** Настройка локализации сообщений для liveness-проверки. Доступна en и ru. Если не указано, то локализация будет работать автоматически */
     var localizationCode: OZLocalizationCode? {
@@ -126,37 +125,73 @@ public protocol OZSDKProtocol {
     
     /** Метод создания контроллера для проведения liveness-проверки. */
     func createVerificationVCWithDelegate(_ delegate: OZVerificationDelegate, actions: [OZVerificationMovement]) -> UIViewController
+    
     /** Метод создания контроллера для тестирования порогов срабатывания. */
     func createTestVerificationVC() -> UIViewController
     
     /** Метод отправки запроса анализа liveness-видео. */
-    func analyse(results: [OZVerificationResult], analyseStates: Set<OZAnalysesState>, fileUploadProgress: @escaping ((Progress) -> Void), completion: @escaping ( _ resolution : AnalyseResolutionStatus?, _ error: Error?) -> Void)
+    func analyse(results: [OZVerificationResult],
+                 analyseStates: Set<OZAnalysesState>,
+                 fileUploadProgress: @escaping ((Progress) -> Void),
+                 completion: @escaping ( _ resolution : AnalyseResolutionStatus?, _ error: Error?) -> Void)
+    
     /** Метод отправки запроса добавления видео в папку и дальнейшего анализа liveness-видео. */
-    func analyse(folderId: String, results: [OZVerificationResult], analyseStates: Set<OZAnalysesState>, fileUploadProgress: @escaping ((Progress) -> Void), completion: @escaping ( _ resolution : AnalyseResolutionStatus?, _ error: Error?) -> Void)
+    func analyse(folderId: String,
+                 results: [OZVerificationResult],
+                 analyseStates: Set<OZAnalysesState>,
+                 fileUploadProgress: @escaping ((Progress) -> Void),
+                 completion: @escaping ( _ resolution : AnalyseResolutionStatus?, _ error: Error?) -> Void)
+    
     /** Метод отправки запроса добавления видео в папку. */
-    func addToFolder(results: [OZVerificationResult], analyseStates: Set<OZAnalysesState>, fileUploadProgress: @escaping ((Progress) -> Void), completion: @escaping (_ folderId : String?, _ error: Error?) -> Void)
+    func addToFolder(results: [OZVerificationResult],
+                     analyseStates: Set<OZAnalysesState>,
+                     fileUploadProgress: @escaping ((Progress) -> Void),
+                     completion: @escaping (_ folderId : String?, _ error: Error?) -> Void)
+    
     /** Метод отправки запроса добавления видео в папку c folderId. */
-    func addToFolder(folderId: String, results: [OZVerificationResult], analyseStates: Set<OZAnalysesState>, fileUploadProgress: @escaping ((Progress) -> Void), completion: @escaping (_ folderId : String?, _ error: Error?) -> Void)
+    func addToFolder(folderId: String,
+                     results: [OZVerificationResult],
+                     analyseStates: Set<OZAnalysesState>,
+                     fileUploadProgress: @escaping ((Progress) -> Void),
+                     completion: @escaping (_ folderId : String?, _ error: Error?) -> Void)
+    
+    func documentAnalyse(documentPhoto: DocumentPhoto,
+                         results: [OZVerificationResult],
+                         analyseStates: Set<OZAnalysesState>,
+                         scenarioState: @escaping ((_ state: ScenarioState) -> Void),
+                         fileUploadProgress: @escaping ((Progress) -> Void),
+                         completion: @escaping (_ folderResolutionStatus: AnalyseResolutionStatus?, _ resolutions : [AnalyseResolution]?, _ error: Error?) -> Void)
     
     /** Удаление всех записанных видео. */
     func cleanTempDirectory()
 }
 
+public struct DocumentPhoto {
+    public init (front: URL?, back: URL?) {
+        self.front  = front
+        self.back   = back
+    }
+    public var front    : URL?
+    public var back     : URL?
+}
+
 /** Конфигурации анализа видео. */
+@available(iOS 11.0, *)
 public enum OZAnalysesState: String {
     case liveness   = "liveness"
     case quality    = "quality"
 }
 
 /** Делегат, возвращающий результаты и состояния liveness-проверки. */
-@objc public protocol OZVerificationDelegate: NSObjectProtocol {
+@available(iOS 11.0, *)
+public protocol OZVerificationDelegate: class {
     /** Метод, возвращающий результаты liveness-проверки. */
-    @objc func onOZVerificationResult(results: [OZVerificationResult])
-//    @objc func onOZVerificationUserCancelled()
+    func onOZVerificationResult(results: [OZVerificationResult])
 }
 
 /** Структура, содержащая результат liveness-проверки. */
-public class OZVerificationResult: NSObject {
+@available(iOS 11.0, *)
+public struct OZVerificationResult {
     /** Статус liveness-проверки. */
     public var status      : OZVerificationStatus
     /** Тип движения liveness-проверки. */
@@ -165,24 +200,11 @@ public class OZVerificationResult: NSObject {
     public var videoURL    : URL?
     /** Временная метка окончания проверки. */
     public var timestamp   : Date
-    
-    init(status: OZVerificationStatus,
-         movement: OZVerificationMovement,
-         videoURL: URL?,
-         timestamp: Date) {
-        
-        self.status = status
-        self.movement = movement
-        self.videoURL = videoURL
-        self.timestamp = timestamp
-        
-        super.init()
-    }
 }
 
 /** Статус liveness-проверки. */
-@objc(OZVerificationStatus)
-public enum OZVerificationStatus: UInt {
+@available(iOS 11.0, *)
+public enum OZVerificationStatus {
     /** Успешное прохождение liveness-проверки. */
     case userProcessedSuccessfully
     /** Liveness-проверка не была обработана. */
@@ -202,6 +224,7 @@ public enum OZVerificationStatus: UInt {
 }
 
 /** Настройка числа попыток */
+@available(iOS 11.0, *)
 public struct OZAttemptSettings {
     /** Число попыток для каждого жеста */
     var singleCount: Int?
@@ -215,8 +238,8 @@ public struct OZAttemptSettings {
 }
 
 /** Движения для liveness-проверки. */
-@objc(OZVerificationMovement)
-public enum OZVerificationMovement: UInt {
+@available(iOS 11.0, *)
+public enum OZVerificationMovement {
     
     // MARK: - actions
     
@@ -245,6 +268,37 @@ public enum OZVerificationMovement: UInt {
     
 }
 
+@available(iOS 11.0, *)
+public class AnalyseResolution {
+    public var status: AnalyseResolutionStatus
+    public var type: String
+    
+    init(type: String, status: AnalyseResolutionStatus) {
+        self.status = status
+        self.type = type
+    }
+}
+
+@available(iOS 11.0, *)
+public class DocumentAnalyseResolution: AnalyseResolution {
+    var documentData: [DocumentDataBlock] = []
+    
+    public func getTextValue(by fieldName: String) -> String? {
+        let block = documentData.first { (block) -> Bool in
+            return block.fieldName == fieldName
+        }
+        return block?.visual ?? block?.mrz
+    }
+}
+
+struct DocumentDataBlock {
+    let fieldName : String
+    let visual : String?
+    let mrz : String?
+}
+
+
+@available(iOS 11.0, *)
 public enum AnalyseResolutionStatus: String {
     case initial            = "INITIAL"
     case processing         = "PROCESSING"
@@ -255,6 +309,12 @@ public enum AnalyseResolutionStatus: String {
     case operatorRequired   = "OPERATOR_REQUIRED"
 }
 
+@available(iOS 11.0, *)
+public enum ScenarioState {
+    case addToFolder, addAnalyses, waitAnalisesResult
+}
+
+@available(iOS 11.0, *)
 public enum OZLocalizationCode: String {
     case ru, en, hy
 }

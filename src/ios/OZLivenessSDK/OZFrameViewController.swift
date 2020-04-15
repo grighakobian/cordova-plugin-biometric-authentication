@@ -9,7 +9,25 @@ import Foundation
 import AVFoundation
 import UIKit
 import FirebaseMLVision
+import DeviceKit
 
+extension CIImage {
+    
+    var brightness: Double? {
+        get {
+            let extentVector = CIVector(x: self.extent.origin.x, y: self.extent.origin.y, z: self.extent.size.width, w: self.extent.size.height)
+            guard let filter = CIFilter(name: "CIAreaAverage", parameters: [kCIInputImageKey: self, kCIInputExtentKey: extentVector]) else { return nil }
+            guard let outputImage = filter.outputImage else { return nil }
+            var bitmap = [UInt8](repeating: 0, count: 4)
+            let context = CIContext(options: [.workingColorSpace: kCFNull])
+            context.render(outputImage, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
+
+            return (0.299 * Double(bitmap[0]) + 0.587 * Double(bitmap[1]) + 0.114 * Double(bitmap[2]))/255
+        }
+    }
+}
+
+@available(iOS 11.0, *)
 class OZFrameViewController: UIViewController {
     
     override var modalPresentationStyle: UIModalPresentationStyle {
@@ -37,6 +55,7 @@ class OZFrameViewController: UIViewController {
     var infoLabel: UILabel?
     var actionButton: UIButton?
     var closeButton: UIButton?
+    var logoImageView = UIImageView()
     
     var session: AVCaptureSession?
     
@@ -48,6 +67,32 @@ class OZFrameViewController: UIViewController {
     let videoProportion: CGFloat = 9/16
     let faceProportion: CGFloat = 1.6
     let mlKitScale: CGFloat = 1.2
+    
+    private var referenceBrightness: CGFloat = 0
+    private let brightnessStep: Double = 0.2
+    
+    private var brightnessIsOn = false
+    
+    var captureImageBrigthness: Double = 1 {
+        didSet {
+            let thld: Double = Double(OZSDK.thresholdSettings.brightnessSetting)
+            DispatchQueue.main.async {
+                if self.brightnessIsOn || self.captureImageBrigthness < thld {
+                    self.brightnessIsOn = true
+                    self.frameView?.fillColor = UIColor.white.withAlphaComponent(0.9)
+                    self.closeButton?.setImage(OZResources.closeButtonImageBl, for: UIControl.State.normal)
+                    UIScreen.main.brightness = 1
+                    self.setNeedsStatusBarAppearanceUpdate()
+                }
+                else {
+                    self.frameView?.fillColor = UIColor.black.withAlphaComponent(0.5)
+                    self.closeButton?.setImage(OZResources.closeButtonImageWh, for: UIControl.State.normal)
+                    self.setNeedsStatusBarAppearanceUpdate()
+                }
+            }
+        }
+    }
+    
     
     var captureImageSize = CGSize(
         width:  1280,
@@ -85,21 +130,25 @@ class OZFrameViewController: UIViewController {
         self.pInfoLabel()
         self.pStartButton()
         self.pCloseButton()
+        self.pLogo()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.setNeedsStatusBarAppearanceUpdate()
+        self.referenceBrightness = UIScreen.main.brightness
         self.requestCameraAccess()
     }
     
+    
     override var preferredStatusBarStyle : UIStatusBarStyle {
-        return .lightContent
+        return brightnessIsOn ? .default : .lightContent
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(true)
         videoOutput?.setSampleBufferDelegate(nil, queue: videoOutputQueue)
+        UIScreen.main.brightness = self.referenceBrightness
     }
     
     private func requestCameraAccess() {
@@ -127,16 +176,16 @@ class OZFrameViewController: UIViewController {
     }
     
     func pFrameView() {
-        if videoPreviewLayer != nil {
-            self.view.layoutSubviews()            
-        }
+        guard let videoPreviewLayer = videoPreviewLayer else { return }
+        self.view.layoutSubviews()
     }
     
     func pInfoLabel() {
         let textColor = OZSDK.customization.textColor
         if infoLabel == nil {
             let infoLabel = UILabel(frame: self.view.frame)
-            infoLabel.font = UIFont.systemFont(ofSize: 20.0)
+            infoLabel.frame.size.height = infoLabel.frame.size.height * 0.75
+            infoLabel.font = UIFont.systemFont(ofSize: 24.0)
             infoLabel.numberOfLines = 0
             infoLabel.textColor = textColor
             // TODO: нужно добавить в конфиги
@@ -152,37 +201,35 @@ class OZFrameViewController: UIViewController {
         let buttonColor = OZSDK.customization.buttonColor
         let closeButton = self.closeButton ?? UIButton(frame: .zero)
         if self.closeButton?.superview == nil {
-            if let icon = OZSDK.customization.cancelButtonCustomization.customImage {
-                closeButton.setImage(icon, for: UIControl.State.normal)
-            } else {
-                closeButton.setImage(OZResources.closeButtonImage, for: UIControl.State.normal)
-            }
+            closeButton.setImage(OZResources.closeButtonImageWh, for: UIControl.State.normal)
             closeButton.addTarget(self, action: #selector(closeAction(sender:)), for: .touchUpInside)
             closeButton.setTitleColor(buttonColor, for: .normal)
             closeButton.setTitleColor(buttonColor.withAlphaComponent(0.3), for: .highlighted)
             closeButton.setTitleColor(buttonColor.withAlphaComponent(0.1), for: .disabled)
             closeButton.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(closeButton)
-            
-            if #available(iOS 11.0, *) {
-                NSLayoutConstraint.activate([
-                    closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4.0),
-                    closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20.0),
-                    closeButton.widthAnchor.constraint(equalToConstant: 24.0),
-                    closeButton.heightAnchor.constraint(equalToConstant: 24.0)
-                ])
-            } else {
-                NSLayoutConstraint.activate([
-                    closeButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 4.0),
-                    closeButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: -20.0),
-                    closeButton.widthAnchor.constraint(equalToConstant: 24.0),
-                    closeButton.heightAnchor.constraint(equalToConstant: 24.0)
-                ])
-            }
-            
+            NSLayoutConstraint.activate([
+                closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4.0),
+                closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20.0),
+                closeButton.widthAnchor.constraint(equalToConstant: 24.0),
+                closeButton.heightAnchor.constraint(equalToConstant: 24.0)
+            ])
             self.closeButton = closeButton
         }
         self.closeButton?.isEnabled = true
+    }
+    
+    func pLogo() {
+        let w: CGFloat = 120
+        let h: CGFloat = 30
+        self.logoImageView.image = OZResources.logo
+        self.logoImageView.frame = CGRect(
+            x:      self.view.frame.width - w - 8,
+            y:      self.view.frame.height - h - 8 - (UIApplication.shared.keyWindow?.safeAreaInsets.bottom ?? 0),
+            width:  w,
+            height: h
+        )
+        self.view.addSubview(logoImageView)
     }
     
     @objc func closeAction(sender: UIButton?) {
@@ -229,9 +276,9 @@ class OZFrameViewController: UIViewController {
     
     lazy var faceDetectorOptions: VisionFaceDetectorOptions = {
         let options = VisionFaceDetectorOptions()
-        options.modeType = .fast
-        options.landmarkType = .all
-        options.classificationType = .all
+        options.performanceMode = .fast
+        options.landmarkMode = .all
+        options.classificationMode = .all
         return options
     }()
     
@@ -244,18 +291,31 @@ class OZFrameViewController: UIViewController {
     // MARK: Face detection
     
     var blockDetection = false
+    private var firstImageCount = 0
+    private let firstImageCountLimit = 5
     
     var mlKitFPS : CGFloat = 0
     
     func detectFaces(in buffer: CMSampleBuffer) {
+        
+        if let imageBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer(buffer) {
+            let ciimage: CIImage = CIImage(cvPixelBuffer: imageBuffer)
+            
+            if AVCaptureDevice.authorizationStatus(for: AVMediaType.video) == .authorized {
+                if firstImageCount > firstImageCountLimit { self.captureImageBrigthness = ciimage.brightness ?? 0 }
+                else { firstImageCount += 1 }
+            }
+        }
+        
         guard !self.blockDetection else { return }
         self.blockDetection = true
         let date = Date()
         
+        
         let visionImage = VisionImage(buffer: buffer)
         visionImage.metadata = self.metadata
         let faceDetector = vision.faceDetector(options: faceDetectorOptions)
-        faceDetector.detect(in: visionImage) { [weak self] faces, error in
+        faceDetector.process(visionImage) { [weak self] faces, error in
             self?.process(faces: faces ?? []) { [weak self] in
                 self?.blockDetection = false
                 self?.mlKitFPS = 1/CGFloat(-date.timeIntervalSinceNow)
@@ -263,26 +323,23 @@ class OZFrameViewController: UIViewController {
         }
     }
     
-    func process(faces: [VisionFace], completion: @escaping (() -> Void)) {
-
-    }
-}
-
-extension OZFrameViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard CMSampleBufferDataIsReady(sampleBuffer) else { return }
-        self.detectFaces(in: sampleBuffer)
-    }
-}
-
-// MARK: - Orientation (fix) delegate
-
-extension OZFrameViewController {
+    func process(faces: [VisionFace], completion: @escaping (() -> Void)) { }
+    
+    // MARK: - Orientation (fix) delegate
+    
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return UIInterfaceOrientationMask.portrait
     }
     
     override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
         return UIInterfaceOrientation.portrait
+    }
+}
+
+@available(iOS 11.0, *)
+extension OZFrameViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard CMSampleBufferDataIsReady(sampleBuffer) else { return }
+        self.detectFaces(in: sampleBuffer)
     }
 }

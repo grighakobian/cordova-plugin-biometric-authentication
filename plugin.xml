@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" 
       xmlns:android="http://schemas.android.com/apk/res/android" 
-      id="cordova-plugin-biometric-authentication" version="2.0.0">
+      id="cordova-plugin-biometric-authentication" version="2.0.3">
    
    
    <name>Biometric Authentication</name>
@@ -36,32 +36,36 @@
       <source-file src="src/ios/src/BiometricAuthentication.swift"/>
       <source-file src="src/ios/src/UIColor+Hex.swift"/>
       <!-- OZLivenessSDK source files -->
-      <source-file src="src/ios/sdk/OZFileVideoManager.swift" />
-      <source-file src="src/ios/sdk/OZFrameView.swift" />
-      <source-file src="src/ios/sdk/OZFrameViewController.swift" />
-      <source-file src="src/ios/sdk/OZLivenessViewController.swift" />
-      <source-file src="src/ios/sdk/OZRequestManager.swift" />
-      <source-file src="src/ios/sdk/OZResources.swift" />
-      <source-file src="src/ios/sdk/OZSDK-API.swift" />
-      <source-file src="src/ios/sdk/OZSDK.swift" />
-      <source-file src="src/ios/sdk/OZUI.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZFileVideoManager.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZFrameView.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZFrameViewController.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZJournal.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZLivenessViewController.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZTestLivenessViewController.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZRequestManager.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZResources.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZSDK-API.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZSDK.swift" />
+      <source-file src="src/ios/OZLivenessSDK/OZUI.swift" /> 
+      
       <!-- iOS platform OZLivenessSDK resource files -->
-      <resource-file src="src/ios/res/GoogleService-Info.plist"  />
-      <resource-file src="src/ios/res/OZLocalizationBundle.bundle"  />
-      <resource-file src="src/ios/res/OZResourceBundle.bundle" />
+      <resource-file src="src/ios/OZLivenessSDK/OZLocalizationBundle.bundle"  />
+      <resource-file src="src/ios/OZLivenessSDK/OZResourceBundle.bundle" />
       <!-- iOS platform frameworks -->
       
       <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
+           <!-- <source url="https://gitlab+deploy-token-85863:aodj2TBktij3RpmYxSW5@gitlab.com/oz-forensics/liveness_sdk.git"/> -->
          </config>
-         <pods use-frameworks="true">
-           <pod name="Alamofire" spec="4.9.0" />
-           <pod name="DeviceKit" spec="2.1.0" />
-           <pod name="Firebase/Core" />
-           <pod name="Firebase/MLVision" spec="5.2.0"/>
-           <pod name="Firebase/MLVisionFaceModel" spec="5.2.0"/>
+         <pods use-frameworks="true" inhibit-all-warnings="true" >
+           <!-- <pod name="OZLivenessSDK" git="https://gitlab+deploy-token-85863:aodj2TBktij3RpmYxSW5@gitlab.com/oz-forensics/liveness_sdk.git" branch="develop" configurations="Debug,Release"/> -->
            <pod name="SVProgressHUD" />
+           <pod name="Alamofire" />
+           <pod name="DeviceKit"/>
+           <pod name="Firebase/Core"/>
+           <pod name="Firebase/MLVision" />
+           <pod name="Firebase/MLVisionFaceModel"/>
          </pods>
        </podspec> 
    </platform>

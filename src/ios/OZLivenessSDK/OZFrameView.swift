@@ -14,7 +14,6 @@ private struct FramePath {
     let lineLayerPath : CGPath
 }
 
-@objc
 class OZFrameView: UIView {
     
     
