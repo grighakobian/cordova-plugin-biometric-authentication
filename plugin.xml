@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" 
       xmlns:android="http://schemas.android.com/apk/res/android" 
-      id="cordova-plugin-biometric-authentication" version="2.0.5">
+      id="cordova-plugin-biometric-authentication" version="2.0.6">
    
    
    <name>Biometric Authentication</name>
@@ -34,31 +34,14 @@
 
       <!-- iOS platform source and resource files -->
       <source-file src="src/ios/src/BiometricAuthentication.swift"/>
-      <!-- OZLivenessSDK source files -->
-      <source-file src="src/ios/OZLivenessSDK/OZFileVideoManager.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZFrameView.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZFrameViewController.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZJournal.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZLivenessViewController.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZTestLivenessViewController.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZRequestManager.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZResources.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZSDK-API.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZSDK.swift" />
-      <source-file src="src/ios/OZLivenessSDK/OZUI.swift" /> 
-      
-      <!-- iOS platform OZLivenessSDK resource files -->
-      <resource-file src="src/ios/OZLivenessSDK/OZLocalizationBundle.bundle"  />
-      <resource-file src="src/ios/OZLivenessSDK/OZResourceBundle.bundle" />
       <!-- iOS platform frameworks -->
-      
       <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
            <source url="https://gitlab.com/oz-forensics/oz-liveness-ios.git"/>
          </config>
          <pods use-frameworks="true" inhibit-all-warnings="true" >
-           <pod name="OZLivenessSDK" swift-version="5.0" git="https://gitlab.com/oz-forensics/oz-liveness-ios.git" branch="develop" configurations="Debug,Release"/>
+           <pod name="OZLivenessSDK" spec="~> 1.2.1" swift-version="5.0" git="https://gitlab.com/oz-forensics/oz-liveness-ios.git" branch="develop" configurations="Debug,Release"/>
          </pods>
        </podspec> 
    </platform>
