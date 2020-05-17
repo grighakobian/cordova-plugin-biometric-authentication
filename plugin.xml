@@ -41,7 +41,7 @@
            <source url="https://gitlab.com/oz-forensics/oz-liveness-ios.git"/>
          </config>
          <pods use-frameworks="true" inhibit-all-warnings="true" >
-           <pod name="OZLivenessSDK" spec="~> 1.2.1" swift-version="5.0" git="https://gitlab.com/oz-forensics/oz-liveness-ios.git" branch="develop" configurations="Debug,Release"/>
+           <pod name="OZLivenessSDK" git="https://gitlab.com/oz-forensics/oz-liveness-ios.git" branch="develop" configurations="Debug,Release"/>
          </pods>
        </podspec> 
    </platform>
