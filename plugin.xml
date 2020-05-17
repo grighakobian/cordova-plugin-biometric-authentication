@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" 
       xmlns:android="http://schemas.android.com/apk/res/android" 
-      id="cordova-plugin-biometric-authentication" version="2.0.3">
+      id="cordova-plugin-biometric-authentication" version="2.0.5">
    
    
    <name>Biometric Authentication</name>
@@ -34,7 +34,6 @@
 
       <!-- iOS platform source and resource files -->
       <source-file src="src/ios/src/BiometricAuthentication.swift"/>
-      <source-file src="src/ios/src/UIColor+Hex.swift"/>
       <!-- OZLivenessSDK source files -->
       <source-file src="src/ios/OZLivenessSDK/OZFileVideoManager.swift" />
       <source-file src="src/ios/OZLivenessSDK/OZFrameView.swift" />
@@ -56,16 +55,10 @@
       <podspec>
          <config>
            <source url="https://github.com/CocoaPods/Specs.git"/>
-           <!-- <source url="https://gitlab+deploy-token-85863:aodj2TBktij3RpmYxSW5@gitlab.com/oz-forensics/liveness_sdk.git"/> -->
+           <source url="https://gitlab.com/oz-forensics/oz-liveness-ios.git"/>
          </config>
          <pods use-frameworks="true" inhibit-all-warnings="true" >
-           <!-- <pod name="OZLivenessSDK" git="https://gitlab+deploy-token-85863:aodj2TBktij3RpmYxSW5@gitlab.com/oz-forensics/liveness_sdk.git" branch="develop" configurations="Debug,Release"/> -->
-           <pod name="SVProgressHUD" />
-           <pod name="Alamofire" />
-           <pod name="DeviceKit"/>
-           <pod name="Firebase/Core"/>
-           <pod name="Firebase/MLVision" />
-           <pod name="Firebase/MLVisionFaceModel"/>
+           <pod name="OZLivenessSDK" swift-version="5.0" git="https://gitlab.com/oz-forensics/oz-liveness-ios.git" branch="develop" configurations="Debug,Release"/>
          </pods>
        </podspec> 
    </platform>

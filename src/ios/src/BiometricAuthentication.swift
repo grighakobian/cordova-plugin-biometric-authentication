@@ -1,6 +1,5 @@
 import UIKit
 import Firebase
-import SVProgressHUD
 
 var isFirebaseConfigured = false
 
@@ -26,8 +25,14 @@ class BiometricAuthentication : CDVPlugin {
     
     private var credentials: Credentials!
     private var currentCommand: CDVInvokedUrlCommand!
-    private var documentPath: String = String()
-    private var displayLanguage: String = "en"
+    private var base64ImageString: String = String()
+    
+    private lazy var documentImageUrl: URL = {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        var documentDirectoryUrl = paths[0]
+        documentDirectoryUrl.appendPathComponent("doc.png")
+        return documentDirectoryUrl
+    }()
     
     private var rootViewController: UIViewController? {
         let window = UIApplication.shared.keyWindow
@@ -45,43 +50,52 @@ class BiometricAuthentication : CDVPlugin {
     private func initialize(command: CDVInvokedUrlCommand) {
         configureSdkSettings(command)
         configureFirebaseIfNeeded()
-        configureAppearances()
         login { (result) in
             print(result)
         }
     }
     
     private func configureSdkSettings(_ command: CDVInvokedUrlCommand) {
+        print(#function, "Arguments: \(command.arguments)")
+        
         currentCommand = command
-        documentPath = command.argument(at: 0) as! String
-        displayLanguage = command.argument(at: 1) as! String
         
+        if command.arguments.count > 0 {
+            base64ImageString = command.argument(at: 0) as? String ?? ""
+            print("base64ImageString: \(base64ImageString)")
+            saveImageData(base64EncodedString: base64ImageString)
+        }
+       
         OZSDK.attemptSettings = OZAttemptSettings(singleCount: 2, commonCount: 3)
-        OZSDK.localizationCode = OZLocalizationCode(rawValue: displayLanguage) ?? .en
-        credentials = Credentials(settings: commandDelegate.settings)
+       credentials = Credentials(settings: commandDelegate.settings)
         
+        var locale = "en"
+        if command.arguments.count > 1 {
+            locale = command.argument(at: 1) as! String
+        }
+        OZSDK.localizationCode = OZLocalizationCode(rawValue: locale)!
+        OZSDK.host = credentials.apiUrl
     }
     
     private func presentLiveness() {
         let actions = [OZVerificationMovement.smile, OZVerificationMovement.scanning]
         let livenessViewController = OZSDK.createVerificationVCWithDelegate(self, actions: actions)
-        rootViewController?.present(livenessViewController, animated: true)
-    }
-    
-    private func configureAppearances() {
-        SVProgressHUD.setHapticsEnabled(false)
-        SVProgressHUD.setForegroundColor(UIColor.hex(0x6400dc))
-        SVProgressHUD.setDefaultMaskType(.custom)
-        SVProgressHUD.setBackgroundLayerColor(UIColor(white: 0, alpha: 0.2))
-        SVProgressHUD.setRingThickness(4.0)
-        SVProgressHUD.setRingRadius(24.0)
-        SVProgressHUD.setMinimumSize(CGSize(width: 120, height: 120))
+        self.rootViewController?.present(livenessViewController, animated: true)
     }
     
     private func configureFirebaseIfNeeded() {
         if (isFirebaseConfigured == false) {
             FirebaseApp.configure()
             isFirebaseConfigured.toggle()
+        }
+    }
+    
+    private func saveImageData(base64EncodedString: String) {
+        let data = Data(base64Encoded: base64EncodedString, options: .init(rawValue: 0))
+        do {
+            try data?.write(to: documentImageUrl, options: .atomic)
+        } catch {
+            print(error)
         }
     }
     
@@ -123,16 +137,16 @@ extension BiometricAuthentication: OZVerificationDelegate {
             print("Progress: \(progress)")
         }) { (analyseResolutionStatus, analyseResolutions, error) in
             print("analyseResolutionStatus: \(analyseResolutionStatus) analyseResolutions: \(analyseResolutions), error: \(error)")
-            SVProgressHUD.show(withStatus: "Processing..")
+          
             if let analyseResolutionStatus = analyseResolutionStatus {
                 switch analyseResolutionStatus {
-                case .success:
-                    SVProgressHUD.showSuccess(withStatus: "Success")
-                    SVProgressHUD.dismiss(withDelay: 2.0) {
-                        self.commandDelegate.send(CDVPluginResult(status: .ok), callbackId: self.currentCommand.callbackId)
-                    }
-                case .initial, .processing, .finished, .operatorRequired:
+                case .initial, .processing, .success:
                     break
+                case .finished:
+                    self.commandDelegate.send(CDVPluginResult(status: .ok), callbackId: self.currentCommand.callbackId)
+                    print("Finished with results:\(analyseResolutions)")
+                case .operatorRequired:
+                    self.sendNoResultCommand()
                 case .declined, .failed:
                     self.sendNoResultCommand()
                 }
@@ -157,20 +171,15 @@ extension BiometricAuthentication: OZVerificationDelegate {
         login { (result) in
             switch result {
             case .success:
-                SVProgressHUD.show(withStatus: "Uploading..")
-                let documentPhotoUrl = URL(fileURLWithPath: self.documentPath)
-                let documentPhoto = DocumentPhoto(front: documentPhotoUrl, back: nil)
+                let documentPhoto = DocumentPhoto(front: self.documentImageUrl, back: nil)
                 self.documentAnalyze(
                     documentPhoto: documentPhoto,
                     results: analyseResults,
-                    analyseStates: [.quality, .liveness]
+                    analyseStates: [.quality]
                 )
             case .failure:
-                SVProgressHUD.dismiss(withDelay: 2.0) {
-                    self.sendNoResultCommand()
-                }
+                self.sendNoResultCommand()
             }
         }
     }
 }
-

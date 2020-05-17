@@ -2,18 +2,19 @@
 /* OZFrameViewController */
 
 // Алерт. Получение доступа к камере
-"CameraAccess.Alert.Title"        = "Grant permissions";
-"CameraAccess.Alert.Message"      = "Camera permission is required";
-"CameraAccess.Alert.OkTitle"      = "Permit";
-"CameraAccess.Alert.CancelTitle"  = "Cancel";
+"CameraAccess.Alert.Title"        = "Թույլատրել";
+"CameraAccess.Alert.Message"      = "Ստուգումն անցնելու համար անհրաժեշտ է տեսախցիկին հասանելիություն";
+"CameraAccess.Alert.OkTitle"      = "Թույլատրել";
+"CameraAccess.Alert.CancelTitle"  = "Չեղարկել";
 
 /* OZLivenessViewController */
 
 // Алерт. Не пройдена проверка
-"FailAttention.Alert.Title"       = "Attention";
-"FailAttention.Alert.Message"     = "Check failed";
-"FailAttention.Alert.OkTitle"     = "Repeat";
-"FailAttention.Alert.CancelTitle" = "Cancel";
+"FailAttention.Alert.Title"       = "ՈՒշադրություն";
+"FailAttention.Alert.Message"     = "Ստուգումը ձախողվել է"; 
+"FailAttention.Alert.OkTitle"     = "Նորից փորձեք"; 
+"FailAttention.Alert.CancelTitle" = "Չեղարկել";
+
 
 // Подсказки
 "FaceState.Right.Recommendation"            = "Move face left";
@@ -29,18 +30,33 @@
 "FaceState.Noface.Recommendation"           = "Align your face with the frame";
 "FaceState.FixRequired.Recommendation"      = "Great, don't move the phone…";
 
+
+"FaceState.Right.Recommendation"            = "Ձախ";
+"FaceState.Left.Recommendation"             = "Աջ";
+"FaceState.High.Recommendation"             = "Ներքև";
+"FaceState.Low.Recommendation"              = "Վերև";
+"FaceState.Far.Recommendation"              = "Մոտեցրեք";
+"FaceState.Close.Recommendation"            = "Հեռացրեք";
+"FaceState.Indirect.Recommendation"         = "Նայեք տեսախցիկին ";
+"FaceState.WithoutIncline.Recommendation"   = "Ուղիղ նայեք տեսախցիկին"; 
+"FaceState.Smile.Recommendation"            = "Այժմ, խնդրում ենք, մի՛ ժպտացեք";
+"FaceState.ClosedEyes.Recommendation"       = "Լայն բացեք աչքերը";
+"FaceState.Noface.Recommendation"           = "Հարմարացրեք Ձեր դեմքը շրջանակին";
+"FaceState.FixRequired.Recommendation"      = "Շատ լավ, \nմի շարժեք հեռախոսը";
+
 // Остальное
-"FinalWaitingLivenessCheck" = "Great, don't move the phone…";
+"FinalWaitingLivenessCheck" = "Հաջողությամբ կատարված է";
 
 // Рекомендации для выполнения жестов
-"Action.Far.Task"       = "Move the phone FROM your face";
-"Action.Close.Task"     = "Move the phone closer";
-"Action.Close.EvenCloser"   = "Even closer";
-"Action.Close.EvenFurther"  = "Even further";
-"Action.Smile.Task"     = "Smile";
-"Action.Up.Task"        = "Move your head up";
-"Action.Down.Task"      = "Move your head down";
-"Action.Left.Task"      = "Turn your head to the left";
-"Action.Right.Task"     = "Turn your head to the right";
-"Action.Scanning.Task"  = "Follow this text";
-"Action.Eyes.Task"      = "Blink/Close you eyes";
+
+"Action.Far.Task"       = "Հեռացրեք";
+"Action.Close.Task"     = "Մոտեցրեք դեմքը";
+"Action.Close.EvenCloser"  = "Մոտեցրեք";
+"Action.Close.EvenFurther" = "Հեռացրեք";
+"Action.Smile.Task"     = "Ժպտացեք";
+"Action.Up.Task"        = "Բարձրացրեք գլուխը";
+"Action.Down.Task"      = "Իջեցրեք գլուխը ";
+"Action.Left.Task"      = "Շրջեք գլուխը դեպի ձախ";
+"Action.Right.Task"     = "Շրջեք գլուխը դեպի աջ";
+"Action.Scanning.Task"  = "Հետևեք տեքստին";
+"Action.Eyes.Task"      = "Մի վայրկյանով փակեք Ձեր աչքերը",
