@@ -58,24 +58,34 @@ class BiometricAuthentication : CDVPlugin {
     
     private func configureSdkSettings(_ command: CDVInvokedUrlCommand) {
         print(#function, "Arguments: \(command.arguments)")
-        
         currentCommand = command
-        
+        OZSDK.attemptSettings = OZAttemptSettings(singleCount: 2, commonCount: 3)
+        credentials = Credentials(settings: commandDelegate.settings)
+        OZSDK.host = credentials.apiUrl
+        saveDocumentImage(command)
+        configureSDKLocale(command)
+    }
+
+    private func saveDocumentImage(_ command: CDVInvokedUrlCommand) {
         if command.arguments.count > 0 {
             base64ImageString = command.argument(at: 0) as? String ?? ""
             print("base64ImageString: \(base64ImageString)")
             saveImageData(base64EncodedString: base64ImageString)
         }
-       
-        OZSDK.attemptSettings = OZAttemptSettings(singleCount: 2, commonCount: 3)
-       credentials = Credentials(settings: commandDelegate.settings)
-        
+    }
+    private func configureSDKLocale(_ command: CDVInvokedUrlCommand) {
         var locale = "en"
         if command.arguments.count > 1 {
             locale = command.argument(at: 1) as! String
         }
-        OZSDK.localizationCode = OZLocalizationCode(rawValue: locale)!
-        OZSDK.host = credentials.apiUrl
+        switch locale {
+        case "ru":
+            OZSDK.localizationCode = OZLocalizationCode.ru
+        case "hy":
+            OZSDK.localizationCode = OZLocalizationCode.hy
+        default:
+            OZSDK.localizationCode = OZLocalizationCode.en
+        }
     }
     
     private func presentLiveness() {
